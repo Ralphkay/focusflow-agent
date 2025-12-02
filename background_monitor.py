@@ -733,6 +733,9 @@ def main():
 
     handle_encryption_key()
 
+    # Check for missed cleanup (e.g., if PC was off at midnight)
+    check_for_missed_cleanup()
+
     global health_monitor_stop_event
     health_monitor_stop_event = start_health_monitor()
 
