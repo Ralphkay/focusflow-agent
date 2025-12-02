@@ -70,13 +70,17 @@ def _vacuum_database():
 
 def _run_sync_and_cleanup_blocking():
     """Performs the blocking part of the cleanup in a separate thread."""
+    sync_successful = False
+    
     try:
         logger.info("Running final aggregation before daily reset.")
         aggregate_daily_data()
         logger.info("Running final data sync before daily reset.")
         asyncio.run(sync_data())
+        sync_successful = True
     except Exception as e:
         logger.error(f"Error during final pre-reset aggregation/sync: {e}", exc_info=True)
+        logger.warning("Sync failed - will only delete already-synced data to prevent data loss.")
 
     logger.info("Starting daily reset of local data from previous days.")
     today = date.today()
@@ -86,22 +90,25 @@ def _run_sync_and_cleanup_blocking():
         with db_lock, get_db_session() as session:
             logger.info(f"Purging records from before {today}. Retention cutoff for unsynced: {retention_cutoff}")
 
-            # Delete all raw activities from previous days
+            # Only delete raw activities that have been processed (aggregated)
+            # Raw activities are safe to delete because they're aggregated into AggregatedActivity
+            # which has its own sync check
             deleted_raw = session.query(RawActivity).filter(
-                func.date(RawActivity.timestamp) < today
+                func.date(RawActivity.timestamp) < today,
+                RawActivity.processed == True  # Only delete if already aggregated
             ).delete(synchronize_session=False)
             
-            # Delete inactive periods from previous days
+            # Delete inactive periods from previous days (embedded in AggregatedActivity)
             deleted_inactive = session.query(InactivePeriod).filter(
                 func.date(InactivePeriod.start_time) < today
             ).delete(synchronize_session=False)
             
-            # Delete manual breaks from previous days
+            # Delete manual breaks from previous days (embedded in AggregatedActivity)
             deleted_breaks = session.query(ManualBreak).filter(
                 func.date(ManualBreak.start_time) < today
             ).delete(synchronize_session=False)
             
-            # Delete old leave periods (ended before today)
+            # Delete old leave periods (ended before today) - these come FROM server
             deleted_leaves = session.query(LeavePeriod).filter(
                 LeavePeriod.end_date < today
             ).delete(synchronize_session=False)
@@ -113,6 +120,7 @@ def _run_sync_and_cleanup_blocking():
             ).delete(synchronize_session=False)
             
             # Force delete very old unsynced records (retention policy)
+            # This prevents infinite DB growth if sync is permanently broken
             deleted_agg_old_unsynced = session.query(AggregatedActivity).filter(
                 AggregatedActivity.date < retention_cutoff,
                 AggregatedActivity.synced == False
@@ -123,6 +131,14 @@ def _run_sync_and_cleanup_blocking():
                     f"Force-deleted {deleted_agg_old_unsynced} unsynced aggregated records "
                     f"older than {MAX_UNSYNCED_RETENTION_DAYS} days. Data was lost due to sync failures."
                 )
+            
+            # Count unsynced records still remaining (for monitoring)
+            unsynced_remaining = session.query(AggregatedActivity).filter(
+                AggregatedActivity.synced == False
+            ).count()
+            
+            if unsynced_remaining > 0:
+                logger.warning(f"{unsynced_remaining} unsynced aggregated records remain - will retry sync later.")
 
             session.commit()
             logger.info(
