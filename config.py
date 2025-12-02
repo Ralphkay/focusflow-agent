@@ -1065,12 +1065,54 @@ def init_app_config(session):
             "sofi.exe": {"category": "Unproductive"}, "public.exe": {"category": "Unproductive"}
         },
         "productive_websites": normalize_domains([
+            # Internal Bank Portals (placeholder - replace mybank.gh with actual domain)
             "intranet.mybank.gh", "hrportal.mybank.gh", "training.mybank.gh", "compliance.mybank.gh",
             "itsupport.mybank.gh", "analytics.mybank.gh", "clientportal.mybank.gh", "vendorportal.mybank.gh",
-            "boardroom.mybank.gh", "riskdashboard.mybank.gh", "paymentsgateway.mybank.gh", "bog.gov.gh",
-            "gse.com.gh", "sec.gov.gh", "nic.gov.gh", "nca.org.gh", "cybersecurity.gov.gh", "ghana.gov.gh",
-            "gra.gov.gh", "ssnit.org.gh", "gipc.org.gh", "gss.gov.gh", "imf.org", "worldbank.org", "bis.org",
-            "fsb.org", "fatf-gafi.org", "baselcommittee.org", "myjoyonline.com", "ghanaweb.com",
+            "boardroom.mybank.gh", "riskdashboard.mybank.gh", "paymentsgateway.mybank.gh",
+            
+            # Ghana Government Sites
+            "bog.gov.gh", "gse.com.gh", "sec.gov.gh", "nic.gov.gh", "nca.org.gh", "cybersecurity.gov.gh", 
+            "ghana.gov.gh", "gra.gov.gh", "ssnit.org.gh", "gipc.org.gh", "gss.gov.gh",
+            "mofep.gov.gh", "parliament.gh", "judicial.gov.gh", "registrargeneral.gov.gh",
+            "controller.gov.gh", "cagd.gov.gh", "ppaghana.org", "epa.gov.gh", "fda.gov.gh",
+            "mint.gov.gh", "moti.gov.gh", "moc.gov.gh", "mlgrd.gov.gh",
+            
+            # Ghana Banks & Financial Institutions
+            "gcb.com.gh", "gcbbank.com.gh", "gcbonlinebanking.com",
+            "stanbicbank.com.gh", "stanbic.com.gh",
+            "absa.com.gh", "absabank.com.gh",
+            "ecobank.com", "ecobank.com.gh", "ecobankghana.com",
+            "zenithbank.com.gh", "zenithgh.com",
+            "fidelitybank.com.gh", "fidelityonline.com.gh",
+            "calbank.net", "caboronline.com",
+            "republicghana.com", "republic.com.gh",
+            "ubghana.com", "ubafghana.com",
+            "gtbank.com.gh", "gtbghana.com",
+            "firstatlantic.com.gh", "fab.com.gh",
+            "prudentialbank.com.gh", "prudentialonline.com.gh",
+            "aaboronline.com", "arb-apex.com", "arbapexbank.com",
+            "firstnationalbank.com.gh", "fnbghana.com.gh",
+            "accessbankplc.com", "accessbank.com.gh",
+            "standardchartered.com.gh", "sc.com/gh",
+            "societegeneral.com.gh", "sgghana.com",
+            "bankofafrica.com.gh", "boaghana.com",
+            "adb.com.gh", "adbghana.com", "agricdevbank.com",
+            "nib.com.gh", "nibghana.com",
+            "cbg.com.gh", "consolidatedbank.com.gh",
+            "omnibank.com.gh", "omnibsic.com.gh",
+            "fbnbank.com.gh", "fbnghana.com",
+            
+            # Ghana Payment & Fintech
+            "ghipss.net", "ghipss.com", "gh-link.net",
+            "mtn.com.gh", "momo.mtn.com.gh", "vodafone.com.gh", "vodafonecash.com.gh",
+            "airtel-tigo.com.gh", "airteltigo.com.gh", "tigo.com.gh",
+            "expresspay.com.gh", "hubtel.com", "slydepay.com",
+            "zeepay.com.gh", "paystack.com", "flutterwave.com",
+            "interswitch.com", "interswitchgroup.com",
+            
+            # International Financial Regulators & Organizations
+            "imf.org", "worldbank.org", "bis.org",
+            "fsb.org", "fatf-gafi.org", "baselcommittee.org",
             "businessghana.com", "citinewsroom.com", "graphic.com.gh", "thebftonline.com", "reuters.com",
             "bloomberg.com", "ft.com", "wsj.com", "cnbc.com", "investopedia.com", "cfr.org", "brookings.edu",
             "nber.org", "ecb.europa.eu", "federalreserve.gov", "bankofengland.co.uk", "docs.google.com",

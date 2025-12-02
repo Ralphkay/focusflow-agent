@@ -15,6 +15,9 @@ logger = logging.getLogger(__name__)
 
 ACTIVITY_SAMPLE_DURATION_SECONDS = 5
 
+# Ghana timezone (GMT/UTC+0, no daylight saving)
+GHANA_TZ = pytz.timezone('Africa/Accra')
+
 
 def aggregate_daily_data():
     """
@@ -53,7 +56,7 @@ def aggregate_daily_data():
                 logger.info(f"Creating new aggregated activity record for {today} with workgroup: {workgroup}")
                 agg_activity = AggregatedActivity(
                     employee_id=employee_id, date=today, workgroup=workgroup,
-                    created_at=datetime.now(pytz.utc),
+                    created_at=datetime.now(GHANA_TZ),
                     activity_data=json.dumps([]), inactive_periods=json.dumps([]),
                     total_keystrokes=0, total_clicks=0, total_scrolls=0
                 )
@@ -166,7 +169,7 @@ def aggregate_daily_data():
             agg_activity.total_scrolls = (agg_activity.total_scrolls or 0) + newly_processed_scrolls
 
             agg_activity.synced = False
-            agg_activity.updated_at = datetime.now(pytz.utc)
+            agg_activity.updated_at = datetime.now(GHANA_TZ)
 
             session.merge(agg_activity)
             session.flush()

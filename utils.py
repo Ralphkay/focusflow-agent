@@ -14,14 +14,47 @@ def sanitize_log(data: str) -> str:
     return re.sub(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '[REDACTED]', data)
 
 
+def clean_incognito_markers(title: str) -> str:
+    """
+    Removes incognito/private browsing markers from window titles.
+    This allows tracking of incognito browsing activity normally.
+    """
+    if not title:
+        return title
+    
+    # Common incognito/private mode markers to remove
+    incognito_patterns = [
+        r'\s*[\-\|]\s*Incognito\s*$',           # Chrome: "Page - Incognito"
+        r'\s*\(Incognito\)\s*',                  # Chrome: "(Incognito)"
+        r'\s*[\-\|]\s*InPrivate\s*$',           # Edge: "Page - InPrivate"
+        r'\s*\(InPrivate\)\s*',                  # Edge: "(InPrivate)"
+        r'\s*[\-\|]\s*Private Browsing\s*$',    # Firefox: "Page - Private Browsing"
+        r'\s*\(Private Browsing\)\s*',           # Firefox: "(Private Browsing)"
+        r'\s*[\-\|]\s*Private\s*$',              # Safari/Opera: "Page - Private"
+        r'\s*\(Private\)\s*',                    # Generic: "(Private)"
+        r'^\[Private\]\s*',                      # Some browsers: "[Private] Page"
+        r'^\[Incognito\]\s*',                    # Some browsers: "[Incognito] Page"
+    ]
+    
+    cleaned_title = title
+    for pattern in incognito_patterns:
+        cleaned_title = re.sub(pattern, '', cleaned_title, flags=re.IGNORECASE)
+    
+    return cleaned_title.strip()
+
+
 def extract_domain_or_title(window_title: str, app_name: str) -> str:
     """
     Extracts a clean domain name from a browser window title.
     For non-browser applications, it returns the original window title.
+    Handles incognito/private browsing windows by stripping markers.
     """
     if not isinstance(window_title, str) or not isinstance(app_name, str):
         return "N/A"
 
+    # Clean incognito markers before processing
+    window_title = clean_incognito_markers(window_title)
+    
     window_title_lower = window_title.lower().strip()
     app_name_lower = app_name.lower().strip()
 

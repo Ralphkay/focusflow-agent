@@ -656,7 +656,7 @@ def run_monitoring():
                                               name="ActivityWriterThread")
     activity_writer_thread.start()
 
-    scheduler = BackgroundScheduler(timezone="UTC")
+    scheduler = BackgroundScheduler(timezone="Africa/Accra")
     scheduler.add_job(collect_and_log_activity, 'interval', seconds=5, name='ActivitySampler')
     scheduler.add_job(aggregate_daily_data, 'interval', minutes=1, name='DailyAggregator')
     scheduler.add_job(lambda: run_async_job(sync_data), 'interval', minutes=5, name='PushAggregatedActivity')
