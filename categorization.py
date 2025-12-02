@@ -13,6 +13,60 @@ from config import CONFIG
 logger = logging.getLogger(__name__)
 
 
+def is_domain_match(text: str, site: str) -> bool:
+    """
+    Checks if a domain/text matches a site pattern.
+    Handles subdomains properly (e.g., 'mycompany.sharepoint.com' matches 'sharepoint.com')
+    
+    Args:
+        text: The domain or text to check
+        site: The site pattern to match against
+        
+    Returns:
+        True if there's a match, False otherwise
+    """
+    if not text or not site:
+        return False
+    
+    text = text.lower().strip()
+    site = site.lower().strip()
+    
+    # Exact match
+    if text == site:
+        return True
+    
+    # Site is contained in text (e.g., 'sharepoint.com' in 'mycompany.sharepoint.com - Documents')
+    if site in text:
+        return True
+    
+    # Subdomain match: text ends with .site (e.g., 'app.powerbi.com' ends with '.powerbi.com')
+    if text.endswith('.' + site):
+        return True
+    
+    # Handle cases like 'powerbi.microsoft.com' matching 'powerbi'
+    # Split by dots and check if site matches any significant part
+    text_parts = text.split('.')
+    site_parts = site.split('.')
+    
+    # Check if site's main domain is in text's parts
+    if len(site_parts) >= 2:
+        site_main = '.'.join(site_parts[-2:])  # e.g., 'sharepoint.com'
+        if site_main in text:
+            return True
+    
+    # Check for common Microsoft/cloud service patterns
+    # e.g., 'app.powerbi.com' should match 'powerbi.microsoft.com'
+    if len(text_parts) >= 2 and len(site_parts) >= 2:
+        # Extract service name (first meaningful part)
+        text_service = text_parts[0] if text_parts[0] not in ['www', 'app', 'portal', 'login'] else (text_parts[1] if len(text_parts) > 1 else '')
+        site_service = site_parts[0] if site_parts[0] not in ['www', 'app', 'portal', 'login'] else (site_parts[1] if len(site_parts) > 1 else '')
+        
+        if text_service and site_service and text_service == site_service:
+            return True
+    
+    return False
+
+
 def categorize_activity(app_name: str, window_title: str) -> str:
     """
     Determines the category (Productive, Neutral, Unproductive) for an activity
@@ -99,18 +153,13 @@ def categorize_website(window_title_or_domain: str) -> str:
     # Check against productive websites
     for site in productive_websites:
         site_lower = site.lower()
-        if site_lower in title_lower or site_lower in domain:
-            return "Productive"
-        # Also check if the domain matches
-        if domain and (domain.endswith(site_lower) or site_lower.endswith(domain)):
+        if is_domain_match(domain, site_lower) or is_domain_match(title_lower, site_lower):
             return "Productive"
     
     # Check against unproductive websites
     for site in unproductive_websites:
         site_lower = site.lower()
-        if site_lower in title_lower or site_lower in domain:
-            return "Unproductive"
-        if domain and (domain.endswith(site_lower) or site_lower.endswith(domain)):
+        if is_domain_match(domain, site_lower) or is_domain_match(title_lower, site_lower):
             return "Unproductive"
     
     # Additional pattern matching for common unproductive sites
