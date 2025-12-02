@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+
+# PyInstaller
+build/
+dist/
+*.spec.bak
+
+# Installer output
+installer/*.exe
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment and secrets
+.env
+*.key
+encryption.key
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.duckdb
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.shutdown_signal

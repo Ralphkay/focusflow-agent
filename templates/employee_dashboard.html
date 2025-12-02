@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFlow Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+
+        :root {
+            --sidebar-bg: #2d3748;
+            --main-bg: #f8fafc;
+            --text-light: #e2e8f0;
+            --text-dark: #1a202c;
+            --text-subtle: #a0aec0;
+            --border-color: #4a5568;
+            --accent-primary: #dd6b20;
+            --accent-secondary: #f6ad55;
+            --primary-button: #dd6b20;
+            --active-pill-bg: #dd6b20;
+            --active-pill-text: #ffffff;
+            --header-height: auto;
+            --sidebar-width: 300px;
+        }
+
+        html, body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--main-bg);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .dashboard-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            flex-shrink: 0;
+            background-color: var(--sidebar-bg);
+            color: var(--text-light);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .content-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .header {
+            height: var(--header-height);
+            flex-shrink: 0;
+            background: #ffffff;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #e2e8f0;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 1.5rem;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .user-profile {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .user-profile h4 { margin: 0; font-size: 1.5rem; }
+        .user-profile p { margin: 0.25rem 0 0; color: var(--text-subtle); }
+
+        .panel-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-subtle);
+        }
+
+        .panel-nav {
+            display: flex;
+            flex-direction: column;
+            margin-top: 1.5rem;
+            border-radius: 8px;
+            background-color: #1a202c;
+            padding: 0.25rem;
+            gap: 0.25rem;
+        }
+
+        .panel-nav-button {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+            border-radius: 6px;
+        }
+
+        .panel-nav-button.active {
+            background-color: var(--active-pill-bg);
+            color: var(--active-pill-text);
+        }
+
+        .panel-nav-button i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .productivity-score-container {
+            text-align: center;
+            padding: 2rem 0;
+            background: #1a202c;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+        }
+
+        #productivity-score {
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            margin: 0;
+        }
+
+        #productivity-score-label { margin: 0; color: var(--text-subtle); }
+
+        .list-group { list-style: none; padding: 0; }
+        .list-group-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            background-color: #ffffff;
+        }
+        .list-group-item:first-of-type { border-radius: 8px 8px 0 0; }
+        .list-group-item:last-of-type { border-bottom: none; border-radius: 0 0 8px 8px; }
+        .list-group-item span:last-child {
+            font-weight: 500;
+            background-color: var(--main-bg);
+            color: var(--accent-primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+        }
+        .activity-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .activity-buttons .btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+        }
+        .edit-activity-btn {
+            background-color: #4c4c4c;
+            color: white;
+        }
+        .delete-activity-btn {
+            background-color: #ef4444;
+            color: white;
+        }
+        .save-activity-btn {
+            background-color: #10b981;
+            color: white;
+        }
+        .cancel-edit-btn {
+            background-color: #6b7280;
+            color: white;
+        }
+        .activity-item-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .activity-item-details small {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+        .activity-item-edit-form {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto auto;
+            gap: 0.5rem;
+            width: 100%;
+            align-items: center;
+        }
+        .activity-item-edit-form input, .activity-item-edit-form select {
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+        }
+
+
+        .filter-group {
+            display: flex;
+            align-items: flex-end;
+            gap: 1rem;
+        }
+        .filter-group .form-group { flex-grow: 1; }
+        .filter-group button { flex-shrink: 0; }
+        .filter-group .refresh-button {
+            background-color: #6c757d;
+        }
+        .filter-group .refresh-button:hover {
+            background-color: #5a6268;
+        }
+
+        #taskActivityForm {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr auto;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .form-label { font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; }
+        .form-control, .form-select {
+            padding: 0.75rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #taskActivityForm button, .filter-group button {
+            background-color: var(--primary-button);
+            color: #ffffff;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .main-view { display: none; }
+        .main-view.active { display: block; }
+        .main-content-panel {
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        .main-content-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .task-item {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1.5rem 0;
+        }
+         .task-item:last-of-type { border-bottom: none; }
+
+        .activity-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 0;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .loader-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex; justify-content: center; align-items: center; z-index: 1000;
+        }
+
+        .loader {
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid var(--primary-button);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .d-none { display: none; }
+
+        .workflow-timeline-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        .workflow-card {
+            padding: 1.5rem;
+            border-radius: 8px;
+            color: var(--text-dark);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .workflow-card-blue { background-color: #e3f2fd; }
+        .workflow-card-green { background-color: #e8f5e9; }
+        .workflow-card-yellow { background-color: #fffde7; }
+        .workflow-card-orange { background-color: #fff3e0; }
+        .workflow-card-gray { background-color: #f5f5f5; }
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            height: 8px;
+            margin-top: 0.75rem;
+        }
+        .progress-bar { height: 100%; }
+        .productive { background-color: #4caf50; }
+        .neutral { background-color: #2196f3; }
+        .idle { background-color: #ff9800; }
+
+        .flex-row { display: flex; justify-content: space-between; align-items: center; }
+        .flex-column { display: flex; flex-direction: column; }
+        .time-breakdown {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            margin-top: 1rem;
+        }
+        .time-breakdown div span {
+            display: block;
+            font-weight: 500;
+        }
+        .time-breakdown div small {
+            font-size: 0.75rem;
+            color: var(--text-subtle);
+        }
+
+        .summary-card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .summary-card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        .summary-card h4 { margin: 0; font-size: 1rem; color: var(--text-subtle); }
+        .summary-card p { margin: 0.5rem 0 0; font-size: 2rem; font-weight: 700; color: var(--text-dark); }
+
+        /* New CSS for inline edit form */
+        .activity-item.editing .activity-item-details {
+            display: none;
+        }
+        .activity-item:not(.editing) .activity-item-edit-form {
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="loader-overlay" class="d-none">
+        <div class="loader"></div>
+    </div>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="user-profile">
+                <h4 id="user-name">Loading...</h4>
+                <p id="user-role"></p>
+            </div>
+
+            <div class="panel">
+                <h5 class="panel-title">Navigation</h5>
+                <div class="panel-nav">
+                    <button class="panel-nav-button active" data-view="home">
+                        <i class="fas fa-home"></i>
+                        <span>Home</span>
+                    </button>
+                    <button class="panel-nav-button" data-view="tasks">
+                        <i class="fas fa-tasks"></i>
+                        <span>Tasks</span>
+                    </button>
+                    <button class="panel-nav-button" data-view="workflow">
+                        <i class="fas fa-stream"></i>
+                        <span>Workflow</span>
+                    </button>
+                    <button class="panel-nav-button" data-view="apps">
+                        <i class="fas fa-th"></i>
+                        <span>Apps</span>
+                    </button>
+                    <button class="panel-nav-button" data-view="sites">
+                        <i class="fas fa-globe"></i>
+                        <span>Sites</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel">
+                 <h5 class="panel-title">Performance</h5>
+                <div class="productivity-score-container">
+                    <p id="performance-score">--</p>
+                    <p id="performance-score-label">Performance Score</p>
+                </div>
+            </div>
+        </div>
+        <div class="content-wrapper">
+            <div class="header">
+                 <form id="dashboardFiltersForm">
+                     <div class="filter-group">
+                         <div class="form-group">
+                             <label for="timePeriodSelect" class="form-label">Time Period</label>
+                             <select class="form-select" id="timePeriodSelect" required>
+                                 <option value="1" selected>Today</option>
+                                 <option value="7">Last 7 Days</option>
+                                 <option value="30">Last 30 Days</option>
+                                 <option value="90">Last 90 Days</option>
+                             </select>
+                         </div>
+                         <button type="submit">Apply</button>
+                         <button type="button" class="refresh-button" id="refreshButton">Refresh Data</button>
+                     </div>
+                 </form>
+                <form id="taskActivityForm">
+                    <div class="form-group">
+                        <label for="taskSelect" class="form-label">Task</label>
+                        <select class="form-select" id="taskSelect" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="activityName" class="form-label">Activity</label>
+                        <input type="text" class="form-control" id="activityName" placeholder="What are you working on?" required>
+                    </div>
+                     <div class="form-group">
+                        <label for="statusSelect" class="form-label">Status</label>
+                        <select class="form-select" id="statusSelect" required>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                    <button type="submit">Log Activity</button>
+                </form>
+            </div>
+
+            <div class="main-content">
+                <div id="home-view" class="main-view active">
+                    <div class="main-content-panel">
+                        <h3 class="main-content-title">Dashboard Overview</h3>
+                        <div class="summary-card-container">
+                             <div class="summary-card">
+                                 <h4>Performance Score</h4>
+                                 <p id="home-performance-score">--%</p>
+                             </div>
+                             <div class="summary-card">
+                                 <h4>Active Time</h4>
+                                 <p id="home-active-time">--m</p>
+                             </div>
+                             <div class="summary-card">
+                                 <h4>Completed Tasks</h4>
+                                 <p id="home-completed-tasks">--</p>
+                             </div>
+                             <div class="summary-card">
+                                 <h4>New Activities</h4>
+                                 <p id="home-new-activities">--</p>
+                             </div>
+                        </div>
+                    </div>
+                    <div class="main-content-panel">
+                        <h3 class="main-content-title">Recent Activities</h3>
+                        <ul class="list-group" id="recent-activities-list">
+                            <p class="text-center text-gray-500 py-4">Loading recent activities...</p>
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="tasks-view" class="main-view">
+                    <div class="main-content-panel">
+                         <h3 class="main-content-title">My Tasks</h3>
+                        <div id="tasks-list">
+                            <p>Loading tasks...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="workflow-view" class="main-view">
+                    <div class="main-content-panel">
+                        <h3 class="main-content-title">Workflow Rhythm</h3>
+                        <div id="workflow-timeline-container" class="workflow-timeline-container">
+                             <p class="text-center text-gray-500 py-4">Loading workflow timeline...</p>
+                        </div>
+                    </div>
+                    <div class="main-content-panel">
+                        <h3 class="main-content-title">Workflow History</h3>
+                        <ul class="list-group" id="workflow-history-list"></ul>
+                    </div>
+                </div>
+
+                <div id="apps-view" class="main-view">
+                    <h3 class="main-content-title">Top Applications</h3>
+                    <ul class="list-group" id="top-apps-list"></ul>
+                </div>
+
+                <div id="sites-view" class="main-view">
+                    <h3 class="main-content-title">Top Websites</h3>
+                    <ul class="list-group" id="top-websites-list"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loader = document.getElementById('loader-overlay');
+            const tasksListContainer = document.getElementById('tasks-list');
+            const topAppsList = document.getElementById('top-apps-list');
+            const topWebsitesList = document.getElementById('top-websites-list');
+            const workflowHistoryList = document.getElementById('workflow-history-list');
+            const recentActivitiesList = document.getElementById('recent-activities-list');
+            const taskSelect = document.getElementById('taskSelect');
+            const taskActivityForm = document.getElementById('taskActivityForm');
+            const dashboardFiltersForm = document.getElementById('dashboardFiltersForm');
+            const timePeriodSelect = document.getElementById('timePeriodSelect');
+            const performanceScoreEl = document.getElementById('performance-score');
+            const homePerformanceScoreEl = document.getElementById('home-performance-score');
+            const homeActiveTimeEl = document.getElementById('home-active-time');
+            const homeCompletedTasksEl = document.getElementById('home-completed-tasks');
+            const homeNewActivitiesEl = document.getElementById('home-new-activities');
+            const mainNavButtons = document.querySelectorAll('.panel-nav-button');
+            const mainViews = document.querySelectorAll('.main-view');
+            const refreshButton = document.getElementById('refreshButton');
+
+            const FLOW_CYCLES = {
+                "Dawn": {"start": 0, "end": 8},
+                "Morning": {"start": 8, "end": 11},
+                "Midday": {"start": 11, "end": 14},
+                "Afternoon": {"start": 14, "end": 17},
+                "Night": {"start": 17, "end": 24}
+            };
+
+            function showLoader() { loader.classList.remove('d-none'); }
+            function hideLoader() { loader.classList.add('d-none'); }
+
+            mainNavButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    mainNavButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    const viewId = button.getAttribute('data-view');
+                    mainViews.forEach(view => {
+                        view.classList.toggle('active', view.id === `${viewId}-view`);
+                    });
+                });
+            });
+
+            function formatTimeMinutes(seconds) {
+                const minutes = Math.round((seconds || 0) / 60);
+                if (minutes > 60) {
+                    const hours = Math.floor(minutes / 60);
+                    const remainingMinutes = minutes % 60;
+                    return `${hours}h ${remainingMinutes}m`;
+                }
+                return `${minutes}m`;
+            }
+
+            function formatTime(isoString) {
+                const date = new Date(isoString);
+                const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+                return date.toLocaleString(undefined, options);
+            }
+
+            function renderWorkflowTimeline(timelineData) {
+                const container = document.getElementById('workflow-timeline-container');
+                container.innerHTML = '';
+                if (!timelineData || timelineData.length === 0) {
+                    container.innerHTML = `<p class="text-center text-gray-500 py-4">No workflow timeline data available.</p>`;
+                    return;
+                }
+                const cycleColors = {
+                    "Dawn": "workflow-card-blue",
+                    "Morning": "workflow-card-green",
+                    "Midday": "workflow-card-yellow",
+                    "Afternoon": "workflow-card-orange",
+                    "Night": "workflow-card-gray"
+                };
+                timelineData.forEach(cycle => {
+                    const card = document.createElement('div');
+                    const bgColorClass = cycleColors[cycle.cycle_name] || "workflow-card-gray";
+                    card.className = `workflow-card ${bgColorClass}`;
+                    const totalTime = (cycle.productive_seconds || 0) + (cycle.active_seconds - cycle.productive_seconds || 0) + (cycle.idle_seconds || 0);
+                    const productivePercent = totalTime > 0 ? ((cycle.productive_seconds || 0) / totalTime) * 100 : 0;
+                    const neutralPercent = totalTime > 0 ? ((cycle.active_seconds - cycle.productive_seconds || 0) / totalTime) * 100 : 0;
+                    const idlePercent = totalTime > 0 ? ((cycle.idle_seconds || 0) / totalTime) * 100 : 0;
+                    const productivityScore = totalTime > 0 ? ((cycle.productive_seconds || 0) / (cycle.active_seconds || 1)) * 100 : 0;
+                    const cycleTimes = FLOW_CYCLES[cycle.cycle_name];
+                    const startTime = cycleTimes ? `${String(cycleTimes.start).padStart(2, '0')}:00` : cycle.start_time;
+                    const endTime = cycleTimes ? `${String(cycleTimes.end).padStart(2, '0')}:00` : cycle.end_time;
+                    card.innerHTML = `
+                        <div class="flex-row">
+                            <h4 style="margin: 0; font-size: 1.125rem;">${cycle.cycle_name}</h4>
+                            <span style="font-size: 1.5rem; font-weight: 700; color: #1a202c;">${productivityScore.toFixed(0)}%</span>
+                        </div>
+                        <p style="font-size: 0.875rem; color: #a0aec0; margin: 0;">${startTime} - ${endTime}</p>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar productive" style="width: ${productivePercent}%"></div>
+                            <div class="progress-bar neutral" style="width: ${neutralPercent}%"></div>
+                            <div class="progress-bar idle" style="width: ${idlePercent}%"></div>
+                        </div>
+                        <div class="time-breakdown">
+                            <div>
+                                <span style="color: #4caf50;">${formatTimeMinutes(cycle.productive_seconds)}</span>
+                                <small>Productive</small>
+                            </div>
+                            <div>
+                                <span style="color: #2196f3;">${formatTimeMinutes(cycle.active_seconds - cycle.productive_seconds)}</span>
+                                <small>Neutral</small>
+                            </div>
+                            <div>
+                                <span style="color: #ff9800;">${formatTimeMinutes(cycle.idle_seconds)}</span>
+                                <small>Idle</small>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+
+            function renderAnalytics(analytics) {
+                if (!analytics || !analytics.summary) {
+                    console.error("Analytics data or summary is missing.");
+                    return;
+                }
+                const totalActiveTime = ((analytics.summary.productive_percent || 0) + (analytics.summary.neutral_percent || 0) + (analytics.summary.unproductive_percent || 0)) / 100 * (analytics.total_time_seconds || 0);
+                homeActiveTimeEl.textContent = formatTimeMinutes(totalActiveTime);
+                const topApps = analytics.top_apps || [];
+                const topWebsites = analytics.top_websites || [];
+                const workflowTimeline = analytics.workflow_timeline || [];
+                topAppsList.innerHTML = topApps.map(app => `<li class="list-group-item"><span>${app.name}</span><span>${app.minutes} min</span></li>`).join('') || '<li>No app data available.</li>';
+                topWebsitesList.innerHTML = topWebsites.map(site => `<li class="list-group-item"><span>${site.name}</span><span>${site.minutes} min</span></li>`).join('') || '<li>No website data available.</li>';
+                workflowHistoryList.innerHTML = workflowTimeline.map(item => {
+                    const minutes = Math.floor((item.productive_seconds || 0) / 60);
+                    const seconds = (item.productive_seconds || 0) % 60;
+                    return `<li class="list-group-item"><span>${item.cycle_name}</span><span>${minutes}m ${seconds}s</span></li>`
+                }).join('') || '<li>No workflow data available.</li>';
+                renderWorkflowTimeline(workflowTimeline);
+            }
+
+            function renderTasks(tasks) {
+                tasksListContainer.innerHTML = '';
+                let completedTaskCount = 0;
+                let recentActivities = [];
+
+                if (!tasks || (typeof tasks === 'object' && Object.keys(tasks).length === 0)) {
+                    tasksListContainer.innerHTML = '<p>No tasks assigned.</p>';
+                    homeCompletedTasksEl.textContent = "0";
+                    homeNewActivitiesEl.textContent = "0";
+                    recentActivitiesList.innerHTML = `<p class="text-center text-gray-500 py-4">No recent activities.</p>`;
+                    taskSelect.innerHTML = '<option disabled selected>No tasks available</option>';
+                    return;
+                }
+                taskSelect.innerHTML = '';
+                const allTasks = [...tasks['To Do'], ...tasks['In Progress'], ...tasks['Done']];
+
+                allTasks.forEach(task => {
+                    if (task.status === 'Completed') {
+                        completedTaskCount++;
+                    }
+                    const taskItem = document.createElement('div');
+                    taskItem.classList.add('task-item');
+                    const taskHeader = document.createElement('div');
+                    // FIX: Correctly access the project name as a string
+                    taskHeader.innerHTML = `<h5>${task.name}</h5><p>${task.project} - <strong>${task.status}</strong></p>`;
+                    taskItem.appendChild(taskHeader);
+
+                    const taskActivitiesList = document.createElement('div');
+                    taskActivitiesList.className = 'task-activities-list';
+                    const taskActivities = task.task_activities || [];
+                    if (taskActivities.length > 0) {
+                        taskActivities.forEach(activity => {
+                            recentActivities.push(activity);
+                            const activityItem = document.createElement('div');
+                            activityItem.className = 'activity-item';
+                            activityItem.setAttribute('data-activity-id', activity.id);
+
+                            const detailsHtml = `
+                                <div class="activity-item-details">
+                                    <span>${activity.name}</span>
+                                    <small><strong>Status:</strong> ${activity.status}</small>
+                                    <small><strong>Start:</strong> ${formatTime(activity.start_time)}</small>
+                                    <small><strong>End:</strong> ${formatTime(activity.end_time)}</small>
+                                </div>
+                                <div class="activity-buttons">
+                                    <button class="btn edit-activity-btn" data-activity-id="${activity.id}">Edit</button>
+                                    <button class="btn delete-activity-btn" data-activity-id="${activity.id}">Delete</button>
+                                </div>
+                            `;
+
+                            const editFormHtml = `
+                                <form class="activity-item-edit-form d-none" data-activity-id="${activity.id}">
+                                    <input type="text" name="name" value="${activity.name}" required>
+                                    <select name="status" required>
+                                        <option value="To Do" ${activity.status === 'To Do' ? 'selected' : ''}>To Do</option>
+                                        <option value="In Progress" ${activity.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                                        <option value="Completed" ${activity.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                                    </select>
+                                    <input type="datetime-local" name="start_time" value="${activity.start_time.substring(0, 16)}" required>
+                                    <input type="datetime-local" name="end_time" value="${activity.end_time.substring(0, 16)}" required>
+                                    <button type="submit" class="btn save-activity-btn">Save</button>
+                                    <button type="button" class="btn cancel-edit-btn">Cancel</button>
+                                </form>
+                            `;
+
+                            activityItem.innerHTML = detailsHtml + editFormHtml;
+                            taskActivitiesList.appendChild(activityItem);
+                        });
+                    } else {
+                         taskActivitiesList.innerHTML = '<p style="padding: 1rem 0; color: #a0aec0;">No activities logged for this task.</p>';
+                    }
+                    taskItem.appendChild(taskActivitiesList);
+                    tasksListContainer.appendChild(taskItem);
+
+                    const option = document.createElement('option');
+                    option.value = task.id;
+                    option.textContent = task.name;
+                    taskSelect.appendChild(option);
+                });
+
+                homeCompletedTasksEl.textContent = completedTaskCount;
+                homeNewActivitiesEl.textContent = recentActivities.length;
+                const sortedRecent = recentActivities.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
+                recentActivitiesList.innerHTML = sortedRecent.slice(0, 5).map(act => `
+                    <li class="list-group-item">
+                        <div>
+                            <strong>${act.name}</strong><br>
+                            <small>${new Date(act.start_time).toLocaleString()}</small>
+                        </div>
+                        <div class="activity-buttons">
+                            <button class="btn delete-activity-btn" data-activity-id="${act.id}">Delete</button>
+                        </div>
+                    </li>
+                `).join('');
+                if (recentActivities.length === 0) {
+                     recentActivitiesList.innerHTML = `<p class="text-center text-gray-500 py-4">No recent activities.</p>`;
+                }
+            }
+
+            async function fetchAndRenderPerformanceScores() {
+                try {
+                    const response = await fetch('/api/performance-scores');
+                    if (!response.ok) {
+                        throw new Error((await response.json()).error || "Failed to fetch performance scores.");
+                    }
+                    const data = await response.json();
+                    const scores = data.scores || [];
+                    if (scores.length > 0) {
+                        const mostRecentScore = scores[0];
+                        const performanceScore = mostRecentScore.performance_score;
+                        performanceScoreEl.textContent = `${Math.round(performanceScore)}%`;
+                        homePerformanceScoreEl.textContent = `${Math.round(performanceScore)}%`;
+                    } else {
+                        performanceScoreEl.textContent = '--%';
+                        homePerformanceScoreEl.textContent = '--%';
+                    }
+                } catch (error) {
+                    console.error("Error fetching performance scores:", error);
+                    performanceScoreEl.textContent = '--%';
+                    homePerformanceScoreEl.textContent = '--%';
+                }
+            }
+
+            async function fetchDashboardData(timePeriod = '1') {
+                showLoader();
+                try {
+                    const response = await fetch(`/api/dashboard-analytics?time_period=${timePeriod}`);
+                    if (!response.ok) throw new Error((await response.json()).error || "Failed to fetch dashboard data.");
+                    const data = await response.json();
+                    const userProfile = data.user_profile || {};
+                    const tasks = data.tasks || {};
+                    const analytics = data.analytics || {};
+                    document.getElementById('user-name').textContent = userProfile.name || 'N/A';
+                    document.getElementById('user-role').textContent = userProfile.role || 'N/A';
+                    renderTasks(tasks);
+                    renderAnalytics(analytics);
+                    await fetchAndRenderPerformanceScores();
+                } catch (error) {
+                    console.error("Error fetching dashboard data:", error);
+                    tasksListContainer.innerHTML = `<p style="color:red;">Error loading data: ${error.message}</p>`;
+                } finally {
+                    hideLoader();
+                }
+            }
+
+            // Event listener for the main tasks list (using event delegation)
+            tasksListContainer.addEventListener('click', (e) => {
+                const targetBtn = e.target.closest('.edit-activity-btn, .delete-activity-btn, .cancel-edit-btn');
+                if (!targetBtn) return;
+                const activityId = targetBtn.getAttribute('data-activity-id');
+                const activityItem = targetBtn.closest('.activity-item');
+
+                if (targetBtn.classList.contains('edit-activity-btn')) {
+                    activityItem.classList.add('editing');
+                    const editForm = activityItem.querySelector('.activity-item-edit-form');
+                    editForm.classList.remove('d-none');
+                } else if (targetBtn.classList.contains('delete-activity-btn')) {
+                    handleDeleteActivity(activityId);
+                } else if (targetBtn.classList.contains('cancel-edit-btn')) {
+                    activityItem.classList.remove('editing');
+                    activityItem.querySelector('.activity-item-edit-form').classList.add('d-none');
+                }
+            });
+
+            // Event listener for the save button on the inline form
+            tasksListContainer.addEventListener('submit', async (e) => {
+                const form = e.target.closest('.activity-item-edit-form');
+                if (!form) return;
+                e.preventDefault();
+                const activityId = form.getAttribute('data-activity-id');
+                const payload = {
+                    name: form.querySelector('[name="name"]').value,
+                    status: form.querySelector('[name="status"]').value,
+                    start_time: form.querySelector('[name="start_time"]').value,
+                    end_time: form.querySelector('[name="end_time"]').value
+                };
+                handleUpdateActivity(activityId, payload);
+            });
+
+            taskActivityForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                showLoader();
+                const payload = {
+                    task_id: parseInt(taskSelect.value),
+                    name: document.getElementById('activityName').value,
+                    status: document.getElementById('statusSelect').value,
+                    start_time: new Date().toISOString(),
+                    end_time: new Date().toISOString(),
+                };
+                try {
+                    const response = await fetch('/api/task-activity/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) throw new Error((await response.json()).error || "Failed to save activity.");
+                    taskActivityForm.reset();
+                    await fetchDashboardData(timePeriodSelect.value);
+                } catch (error) {
+                    alert(error.message);
+                } finally {
+                    hideLoader();
+                }
+            });
+
+            dashboardFiltersForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                fetchDashboardData(timePeriodSelect.value);
+            });
+
+            refreshButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                fetchDashboardData(timePeriodSelect.value);
+            });
+
+            async function handleUpdateActivity(activityId, payload) {
+                showLoader();
+                try {
+                    const response = await fetch(`/api/task-activity/${activityId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error((await response.json()).error || "Failed to update activity.");
+                    await fetchDashboardData(timePeriodSelect.value);
+                } catch (error) {
+                    alert(error.message);
+                } finally {
+                    hideLoader();
+                }
+            }
+
+            async function handleDeleteActivity(activityId) {
+                if (!confirm("Are you sure?")) return;
+                showLoader();
+                try {
+                    const response = await fetch(`/api/task-activity/${activityId}`, { method: 'DELETE' });
+                    if (!response.ok) throw new Error((await response.json()).error || "Failed to delete activity.");
+                    await fetchDashboardData(timePeriodSelect.value);
+                } catch (error) {
+                    alert(error.message);
+                } finally {
+                    hideLoader();
+                }
+            }
+
+            fetchDashboardData(timePeriodSelect.value);
+        });
+    </script>
+</body>
+</html>
