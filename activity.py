@@ -41,8 +41,8 @@ input_counts = {
 }
 last_active_time = time.time()
 active_window_info = {
-    "app_name": "Unknown App",
-    "window_title": "Unknown Title"
+    "app_name": "Desktop",
+    "window_title": "Desktop"
 }
 
 
@@ -61,14 +61,91 @@ def get_active_window_title():
 
 
 def get_active_application_name():
+    """
+    Gets the name of the currently active application using multiple fallback methods.
+    Returns the executable name (e.g., 'chrome.exe') or a friendly name if available.
+    """
     try:
         hwnd = win32gui.GetForegroundWindow()
-        if hwnd:
+        if not hwnd:
+            return "Desktop"
+        
+        # Method 1: Get process name via process ID
+        try:
             _, proc_id = win32process.GetWindowThreadProcessId(hwnd)
-            return psutil.Process(proc_id).name()
-        return "Unknown App"
-    except (psutil.NoSuchProcess, psutil.AccessDenied, ValueError):
-        return "Unknown App"
+            if proc_id and proc_id > 0:
+                process = psutil.Process(proc_id)
+                proc_name = process.name()
+                if proc_name and proc_name.lower() not in ['', 'system', 'idle']:
+                    return proc_name
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+        
+        # Method 2: Try to get the executable path and extract the filename
+        try:
+            _, proc_id = win32process.GetWindowThreadProcessId(hwnd)
+            if proc_id and proc_id > 0:
+                process = psutil.Process(proc_id)
+                exe_path = process.exe()
+                if exe_path:
+                    import os
+                    return os.path.basename(exe_path)
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess, OSError):
+            pass
+        
+        # Method 3: Get window class name as fallback
+        try:
+            class_name = win32gui.GetClassName(hwnd)
+            if class_name and class_name not in ['', 'Windows.UI.Core.CoreWindow', 'ApplicationFrameWindow']:
+                # Map common window class names to friendly app names
+                class_to_app = {
+                    'Chrome_WidgetWin_1': 'chrome.exe',
+                    'MozillaWindowClass': 'firefox.exe',
+                    'IEFrame': 'iexplore.exe',
+                    'OpusApp': 'winword.exe',
+                    'XLMAIN': 'excel.exe',
+                    'PPTFrameClass': 'powerpnt.exe',
+                    'rctrl_renwnd32': 'outlook.exe',
+                    'Notepad': 'notepad.exe',
+                    'ConsoleWindowClass': 'cmd.exe',
+                    'CASCADIA_HOSTING_WINDOW_CLASS': 'windowsterminal.exe',
+                    'PseudoConsoleWindow': 'powershell.exe',
+                    'SunAwtFrame': 'java.exe',
+                    'SALFRAME': 'soffice.exe',
+                    'Vim': 'vim.exe',
+                    'Emacs': 'emacs.exe',
+                }
+                if class_name in class_to_app:
+                    return class_to_app[class_name]
+                # For UWP apps, try to get a better name
+                if class_name == 'ApplicationFrameWindow':
+                    window_title = win32gui.GetWindowText(hwnd)
+                    if window_title:
+                        # Extract app name from UWP window title pattern
+                        return f"{window_title.split(' - ')[0].split(' |')[0].strip()}.exe" if window_title else "UWPApp.exe"
+        except Exception:
+            pass
+        
+        # Method 4: Use window title to derive app name as last resort
+        try:
+            window_title = win32gui.GetWindowText(hwnd)
+            if window_title:
+                # Common patterns: "Document - Application" or "Application"
+                parts = window_title.split(' - ')
+                if len(parts) > 1:
+                    app_hint = parts[-1].strip()
+                    # Clean up common suffixes
+                    for suffix in [' (Administrator)', ' (Not Responding)', ' [Administrator]']:
+                        app_hint = app_hint.replace(suffix, '')
+                    if app_hint and len(app_hint) < 50:
+                        return f"{app_hint}.exe"
+        except Exception:
+            pass
+        
+        return "Desktop"
+    except Exception as e:
+        logger.debug(f"Error getting active application name: {e}")
+        return "Desktop"
 
 
 def get_idle_duration():
