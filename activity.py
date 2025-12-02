@@ -122,7 +122,10 @@ def get_active_application_name():
                     window_title = win32gui.GetWindowText(hwnd)
                     if window_title:
                         # Extract app name from UWP window title pattern
-                        return f"{window_title.split(' - ')[0].split(' |')[0].strip()}.exe" if window_title else "UWPApp.exe"
+                        app_hint = window_title.split(' - ')[0].split(' |')[0].strip()
+                        if app_hint and len(app_hint) > 0:
+                            return f"{app_hint}.exe"
+                        return "UWPApp.exe"
         except Exception:
             pass
         
@@ -137,7 +140,8 @@ def get_active_application_name():
                     # Clean up common suffixes
                     for suffix in [' (Administrator)', ' (Not Responding)', ' [Administrator]']:
                         app_hint = app_hint.replace(suffix, '')
-                    if app_hint and len(app_hint) < 50:
+                    # Only return if we have a valid non-empty name
+                    if app_hint and len(app_hint) > 0 and len(app_hint) < 50:
                         return f"{app_hint}.exe"
         except Exception:
             pass

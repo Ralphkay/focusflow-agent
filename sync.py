@@ -160,13 +160,25 @@ async def sync_data():
     for activity in activities_to_sync:
         logger.debug(
             f"Preparing activity for sync: Date={activity.date}, Employee={activity.employee_id}, Total Active Time={activity.total_active_time_seconds}")
+        
+        # Parse and filter activity_data to remove entries with blank app names
+        raw_activity_data = json.loads(activity.activity_data) if activity.activity_data else []
+        filtered_activity_data = [
+            event for event in raw_activity_data 
+            if event.get("app_name") and event.get("app_name").strip() not in ["", ".exe", None]
+        ]
+        
+        # Log if we filtered any entries
+        if len(filtered_activity_data) < len(raw_activity_data):
+            logger.warning(f"Filtered out {len(raw_activity_data) - len(filtered_activity_data)} activities with blank app names for {activity.date}")
+        
         payload_batch.append({
             "employee_id": activity.employee_id,
             "date": activity.date.isoformat(),
             "total_active_time_seconds": activity.total_active_time_seconds,
             "total_idle_time_seconds": activity.total_idle_time_seconds,
-            "activity_data": json.loads(activity.activity_data),
-            "inactive_periods": json.loads(activity.inactive_periods),
+            "activity_data": filtered_activity_data,
+            "inactive_periods": json.loads(activity.inactive_periods) if activity.inactive_periods else [],
             "total_keystrokes": activity.total_keystrokes,
             "total_clicks": activity.total_clicks,
             "total_scrolls": activity.total_scrolls,

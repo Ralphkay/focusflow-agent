@@ -112,6 +112,16 @@ def aggregate_daily_data():
                     duration = interaction_data.get("active_duration", ACTIVITY_SAMPLE_DURATION_SECONDS)
                     app_name = raw.application_name
                     window_title = raw.window_title
+                    
+                    # Skip records with blank or empty app names
+                    if not app_name or app_name.strip() == "" or app_name.strip() == ".exe":
+                        logger.warning(f"Skipping activity with blank app name. Window title: {window_title}")
+                        continue
+                    
+                    # Ensure app_name is cleaned
+                    app_name = app_name.strip()
+                    if not app_name:
+                        app_name = "Unknown App"
 
                     # Get input counts from the raw activity record
                     k_count = interaction_data.get("keystrokes", 0)
