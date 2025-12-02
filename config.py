@@ -1182,7 +1182,104 @@ def init_app_config(session):
             
             # Food & Lifestyle
             "foodnetwork.com", "allrecipes.com", "tasty.co", "epicurious.com",
-            "yelp.com", "zomato.com", "grubhub.com", "doordash.com", "ubereats.com"
+            "yelp.com", "zomato.com", "grubhub.com", "doordash.com", "ubereats.com",
+            
+            # ===== AFRICAN WEBSITES (Unproductive) =====
+            
+            # Ghana News & Entertainment
+            "myjoyonline.com", "ghanaweb.com", "peacefmonline.com", "aaboronline.com",
+            "pulse.com.gh", "yen.com.gh", "ghbase.com", "ghpage.com", "zionfelix.net",
+            "ameyawdebrah.com", "ghanamusic.com", "ghanamotion.com", "kuulpeeps.com",
+            "ghsplash.com", "attractivemustapha.com", "haboronline.com", "gaborone.com",
+            "mynewsgh.com", "modernghana.com", "starrfm.com.gh", "happyghana.com",
+            "kasapafmonline.com", "ultimatefmonline.com", "akaboronline.com",
+            "glotzgh.com", "entertainmentgh.com", "ghkasa.com", "ghanaiantimes.com.gh",
+            "dailyguidenetwork.com", "thefinderonline.com", "newsghana.com.gh",
+            "theheraldghana.com", "gikiiblog.com", "onaboronline.com", "asaboronline.com",
+            "sammyflextv.com", "svtv.com", "kolobosonline.com", "yaaboronline.com",
+            
+            # Ghana Betting & Gambling
+            "betway.com.gh", "sportybet.com", "betpawa.com.gh", "1xbet.com.gh",
+            "bangbet.com.gh", "mybet.africa", "supabet.com.gh", "betboro.com",
+            "premierbet.com.gh", "soccabet.com.gh", "betyetu.com.gh", "betika.com",
+            "betlion.com.gh", "melbet.com.gh", "22bet.com.gh", "frapapa.com",
+            "bet9ja.com", "nairabet.com", "merrybet.com", "betking.com",
+            "paripesa.com.gh", "linebet.com", "betwinner.com.gh", "mostbet.com",
+            
+            # Nigeria News & Entertainment
+            "lindaikejisblog.com", "bellanaija.com", "naijaloaded.com.ng", "naijamusic.com",
+            "tooxclusive.com", "notjustok.com", "tooexclusive.com", "laikipia.com",
+            "naij.com", "legit.ng", "thenationonlineng.net", "punchng.com",
+            "vanguardngr.com", "premiumtimesng.com", "dailypost.ng", "thisdaylive.com",
+            "guardian.ng", "thecable.ng", "tribuneonlineng.com", "sunnewsonline.com",
+            "instablog9ja.com", "360nobs.com", "jaguda.com", "nigeriafilms.com",
+            "nollywoodgists.com", "gossipmill.com", "informationng.com", "yabaleftonline.ng",
+            "kikifoodies.com", "nigerianmonitor.com", "dailyinfo.com.ng", "arifrenz.com",
+            
+            # Kenya News & Entertainment
+            "standardmedia.co.ke", "nation.co.ke", "the-star.co.ke", "kenyans.co.ke",
+            "tuko.co.ke", "nairobi.news", "ghafla.com", "mpasho.co.ke", "pulselive.co.ke",
+            "sde.co.ke", "nairobinews.nation.co.ke", "citizentv.co.ke", "edaily.co.ke",
+            "kahawatungu.com", "kenyapage.net", "hapakenya.com", "kenyan-post.com",
+            
+            # South Africa News & Entertainment
+            "news24.com", "iol.co.za", "timeslive.co.za", "ewn.co.za", "dailymaverick.co.za",
+            "sowetanlive.co.za", "sundayworld.co.za", "citypress.co.za", "mg.co.za",
+            "rekord.co.za", "zalebs.com", "thesouthafrican.com", "thesouthafricanews.com",
+            "capetownetc.com", "joburgetc.com", "durbannews.co.za", "channel24.co.za",
+            "parent24.com", "w24.co.za", "drum.co.za", "you.co.za", "tvplus.co.za",
+            "hollywoodbets.net", "betway.co.za", "supabets.co.za", "worldsportsbetting.co.za",
+            "lottostar.co.za", "sunbet.co.za", "playabets.co.za", "gbets.co.za",
+            
+            # Tanzania & East Africa
+            "ippmedia.com", "thecitizen.co.tz", "dailynews.co.tz", "millardayo.com",
+            "bongolive5.co.tz", "jamiiforums.com", "michuzi.com", "richmondpost.com",
+            "mwananchi.co.tz", "habarileo.co.tz", "mtanzania.co.tz", "majira.co.tz",
+            "wasafitv.co.tz", "eatv.tv", "cloudsfm.com", "bongo5.com", "bongoflava.co.tz",
+            
+            # Uganda & Rwanda
+            "newvision.co.ug", "monitor.co.ug", "observer.ug", "independent.co.ug",
+            "chimpreports.com", "softpower.ug", "pmldaily.com", "sqoop.co.ug",
+            "newtimes.co.rw", "ktpress.rw", "igihe.com", "umuseke.rw", "rwanda-podium.org",
+            
+            # Other African Countries
+            "allafrica.com", "africanews.com", "bbc.com/afrique", "rfi.fr/afrique",
+            "jeuneafrique.com", "lemonde.fr/afrique", "france24.com/africa",
+            "saharareporters.com", "premiumtimes.com", "guardian.ng", "thisdaystyle.ng",
+            "dailytrust.com.ng", "blueprint.ng", "ripplesnigeria.com",
+            
+            # African Social & Dating
+            "badoo.com", "afrointroductions.com", "africanlove.com", "trueafrican.com",
+            "datemyafrica.com", "africandating.com", "blackdating.com", "africanmatcher.com",
+            
+            # African Entertainment & Music
+            "notjustok.com", "tooxclusive.com", "jaguda.com", "360nobs.com",
+            "ghanamotion.com", "ghanamusic.com", "muwado.com", "boomplay.com",
+            "mdundo.com", "hulkshare.com", "fakaza.com", "zamusic.org", "sahiphopmag.co.za",
+            "slikouronlife.co.za", "thesauce.co.za", "africax5.tv", "africanmagic.tv",
+            
+            # African Video/Streaming
+            "youtube.com/watch", "netflix.com", "showmax.com", "dstv.com",
+            "gotv.com", "iroko.tv", "irokotv.com", "nollyland.com", "ibaka.tv",
+            "africamagic.dstv.com", "viutv.com", "afrostream.tv", "gonnetv.com",
+            
+            # Zambia, Zimbabwe, Malawi
+            "zambianwatchdog.com", "lusakatimes.com", "mwebantu.com", "diggers.news",
+            "herald.co.zw", "newsday.co.zw", "chronicle.co.zw", "newzimbabwe.com",
+            "zimlive.com", "bulawayo24.com", "263chat.com", "pindula.co.zw",
+            "nyasatimes.com", "malawivoice.com", "maravipost.com", "faceofmalawi.com",
+            
+            # Egypt, Morocco, North Africa
+            "youm7.com", "masrawy.com", "elwatannews.com", "dostor.org",
+            "akhbarelyom.com", "ahram.org.eg", "elfagr.com", "cairo24.com",
+            "hespress.com", "le360.ma", "medias24.com", "lavieeco.com",
+            "telquel.ma", "yabiladi.com", "h24info.ma", "barlamane.com",
+            
+            # African Classifieds & Shopping
+            "jiji.com.gh", "jiji.ng", "jiji.co.ke", "jiji.co.tz", "jiji.ug",
+            "tonaton.com", "olx.com.gh", "olx.co.ke", "olx.co.za", "jumia.com.gh",
+            "jumia.com.ng", "jumia.co.ke", "takealot.com", "konga.com", "kilimall.com",
+            "kikuu.com", "cheki.com.gh", "cheki.co.ke", "carmudi.com.gh", "buyrentkenya.com"
         ])
     }
 
