@@ -231,3 +231,25 @@ class AppConfig(Base):
     settings = Column(JSON, nullable=False)
     pushed_to_central = Column(Boolean, default=False, nullable=False)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+
+location_records_id_seq = Sequence('location_records_id_seq')
+
+
+class LocationRecord(Base):
+    __tablename__ = 'location_records'
+    id = Column(Integer, location_records_id_seq, server_default=location_records_id_seq.next_value(), primary_key=True)
+    employee_id = Column(String, ForeignKey('employee_details.employee_id'), nullable=False)
+    timestamp = Column(DateTime, default=datetime.now, nullable=False)
+    location_type = Column(String, nullable=False)        # 'wifi_mapped', 'wifi_unknown', 'ip_geo', 'unknown'
+    wifi_ssid = Column(String, nullable=True)
+    location_name = Column(String, nullable=True)          # Resolved office name or city
+    city = Column(String, nullable=True)
+    country = Column(String, nullable=True)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    ip_address = Column(String, nullable=True)
+    synced = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=datetime.now)
+
+    employee = relationship("EmployeeDetails")

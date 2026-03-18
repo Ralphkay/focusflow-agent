@@ -1,4 +1,4 @@
-# activity.py (Final Corrected Version with Humanistic Logging)
+# activity.py (Pipeline-Fixed Version with Thread-Safe Input Counts)
 
 import threading
 import time
@@ -39,6 +39,7 @@ input_counts = {
     "clicks": 0,
     "scrolls": 0,
 }
+input_counts_lock = threading.Lock()  # Protects input_counts from race conditions
 last_active_time = time.time()
 active_window_info = {
     "app_name": "Desktop",
@@ -315,12 +316,13 @@ def process_input_events():
     while True:
         try:
             event_type, event_data = input_events_queue.get(block=True, timeout=1)
-            if event_type == "keystroke":
-                input_counts["keystrokes"] += 1
-            elif event_type == "click":
-                input_counts["clicks"] += 1
-            elif event_type == "scroll":
-                input_counts["scrolls"] += 1
+            with input_counts_lock:
+                if event_type == "keystroke":
+                    input_counts["keystrokes"] += 1
+                elif event_type == "click":
+                    input_counts["clicks"] += 1
+                elif event_type == "scroll":
+                    input_counts["scrolls"] += 1
         except queue.Empty:
             continue
         except Exception as e:
@@ -333,9 +335,10 @@ def log_input_activity():
     This provides humanistic logs without being overly verbose.
     """
     global input_counts
-    keystrokes = input_counts["keystrokes"]
-    clicks = input_counts["clicks"]
-    scrolls = input_counts["scrolls"]
+    with input_counts_lock:
+        keystrokes = input_counts["keystrokes"]
+        clicks = input_counts["clicks"]
+        scrolls = input_counts["scrolls"]
 
     if keystrokes > 0 or clicks > 0 or scrolls > 0:
         logger.info(f"Detected user input: {keystrokes} keystrokes, {clicks} clicks, {scrolls} scrolls.")
@@ -384,14 +387,22 @@ def collect_and_log_activity():
             logger.info(f"User is idle ({idle_seconds:.2f}s). Added 'inactive' record to queue.")
         else:
             # User is active, log an active record with aggregated input counts
+            with input_counts_lock:
+                current_keystrokes = input_counts["keystrokes"]
+                current_clicks = input_counts["clicks"]
+                current_scrolls = input_counts["scrolls"]
+                input_counts["keystrokes"] = 0
+                input_counts["clicks"] = 0
+                input_counts["scrolls"] = 0
+
             record_data = {
                 "timestamp": now,
                 "activity_type": 'active',
                 "value": json.dumps({
                     "active_duration": 5,  # The duration of the sample interval
-                    "keystrokes": input_counts["keystrokes"],
-                    "clicks": input_counts["clicks"],
-                    "scrolls": input_counts["scrolls"]
+                    "keystrokes": current_keystrokes,
+                    "clicks": current_clicks,
+                    "scrolls": current_scrolls
                 }),
                 "application_name": active_window_info["app_name"],
                 "window_title": active_window_info["window_title"],
@@ -399,12 +410,7 @@ def collect_and_log_activity():
             }
             activity_queue.put(record_data)
             logger.info(
-                f"User is active. Added 'active' record to queue. App: {active_window_info['app_name']}, Title: {active_window_info['window_title']}. (K:{input_counts['keystrokes']}, C:{input_counts['clicks']}, S:{input_counts['scrolls']})")
-
-            # Reset counts after logging
-            input_counts["keystrokes"] = 0
-            input_counts["clicks"] = 0
-            input_counts["scrolls"] = 0
+                f"User is active. Added 'active' record to queue. App: {active_window_info['app_name']}, Title: {active_window_info['window_title']}. (K:{current_keystrokes}, C:{current_clicks}, S:{current_scrolls})")
 
     except Exception as e:
         logger.error(f"Error handling activity detection: {e}", exc_info=True)

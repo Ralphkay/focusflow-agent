@@ -1,4 +1,4 @@
-# cleanup.py (Full Updated Code)
+# cleanup.py (Pipeline-Fixed Version)
 import logging
 import asyncio
 from datetime import date, timedelta
@@ -7,7 +7,7 @@ import threading
 import os
 
 from database import get_db_session, db_lock, engine, DATABASE_FILE
-from client_models import RawActivity, AggregatedActivity, InactivePeriod, ManualBreak, LeavePeriod
+from client_models import RawActivity, AggregatedActivity, InactivePeriod, ManualBreak, LeavePeriod, LocationRecord
 from config import LOG_FILE, APP_DATA_PATH
 from aggregation import aggregate_daily_data
 from sync import sync_data
@@ -76,7 +76,7 @@ def _run_sync_and_cleanup_blocking():
         logger.info("Running final aggregation before daily reset.")
         aggregate_daily_data()
         logger.info("Running final data sync before daily reset.")
-        asyncio.run(sync_data())
+        sync_data()  # sync_data is now synchronous
         sync_successful = True
     except Exception as e:
         logger.error(f"Error during final pre-reset aggregation/sync: {e}", exc_info=True)
@@ -131,6 +131,24 @@ def _run_sync_and_cleanup_blocking():
                     f"Force-deleted {deleted_agg_old_unsynced} unsynced aggregated records "
                     f"older than {MAX_UNSYNCED_RETENTION_DAYS} days. Data was lost due to sync failures."
                 )
+
+            # Clean up synced location records from previous days
+            deleted_location_synced = session.query(LocationRecord).filter(
+                func.date(LocationRecord.timestamp) < today,
+                LocationRecord.synced == True
+            ).delete(synchronize_session=False)
+
+            # Force delete old unsynced location records (retention policy)
+            deleted_location_old_unsynced = session.query(LocationRecord).filter(
+                func.date(LocationRecord.timestamp) < retention_cutoff,
+                LocationRecord.synced == False
+            ).delete(synchronize_session=False)
+
+            if deleted_location_old_unsynced > 0:
+                logger.warning(
+                    f"Force-deleted {deleted_location_old_unsynced} unsynced location records "
+                    f"older than {MAX_UNSYNCED_RETENTION_DAYS} days."
+                )
             
             # Count unsynced records still remaining (for monitoring)
             unsynced_remaining = session.query(AggregatedActivity).filter(
@@ -148,7 +166,9 @@ def _run_sync_and_cleanup_blocking():
                 f"{deleted_agg_old_unsynced} old unsynced aggregated days, "
                 f"{deleted_inactive} inactive periods, "
                 f"{deleted_breaks} manual breaks, "
-                f"{deleted_leaves} expired leave periods."
+                f"{deleted_leaves} expired leave periods, "
+                f"{deleted_location_synced} synced location records, "
+                f"{deleted_location_old_unsynced} old unsynced location records."
             )
     except Exception as e:
         logger.error(f"Could not purge old data from local database: {e}", exc_info=True)

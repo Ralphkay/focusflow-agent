@@ -33,10 +33,11 @@ from client_api_service import (run_sync_in_background, sync_with_central_server
                                 get_server_authenticated_session, push_ai_task_plan)
 from cleanup import reset_daily_data
 from sync import sync_data, sync_employee_details, sync_projects_and_tasks, sync_status_data, \
-    check_central_server_health
+    check_central_server_health, sync_location_data
 from config import CONFIG, load_config, handle_encryption_key, init_logging, init_app_config
 from client_models import EmployeeDetails, AggregatedActivity, Task, Project, TaskActivity, RawActivity
 from health_monitor import start_health_monitor # Import the health monitor
+from location_tracker import collect_location_data  # Location tracking
 
 # --- Logging and Global Setup ---
 init_logging()
@@ -659,12 +660,15 @@ def run_monitoring():
     scheduler = BackgroundScheduler(timezone="Africa/Accra")
     scheduler.add_job(collect_and_log_activity, 'interval', seconds=5, name='ActivitySampler')
     scheduler.add_job(aggregate_daily_data, 'interval', minutes=1, name='DailyAggregator')
-    scheduler.add_job(lambda: run_async_job(sync_data), 'interval', minutes=5, name='PushAggregatedActivity')
+    scheduler.add_job(sync_data, 'interval', minutes=5, name='PushAggregatedActivity')
     scheduler.add_job(lambda: run_async_job(sync_task_assigned_activities), 'interval', minutes=5,
                       name='PushTaskActivities')
-    scheduler.add_job(lambda: run_async_job(sync_employee_details), 'interval', minutes=5, name='PushEmployeeDetails')
-    scheduler.add_job(lambda: run_async_job(sync_status_data), 'interval', minutes=5, name='PushStatusData')
+    scheduler.add_job(sync_employee_details, 'interval', minutes=5, name='PushEmployeeDetails')
+    scheduler.add_job(sync_status_data, 'interval', minutes=5, name='PushStatusData')
+    scheduler.add_job(sync_projects_and_tasks, 'interval', minutes=5, name='PushProjectsTasks')
     scheduler.add_job(run_sync_in_background, 'interval', minutes=5, name='PullFromServer')
+    scheduler.add_job(collect_location_data, 'interval', minutes=5, name='LocationTracker')
+    scheduler.add_job(sync_location_data, 'interval', minutes=5, name='PushLocationData')
     scheduler.add_job(reset_daily_data, 'cron', hour=0, minute=1, name='DailyCleanup')
 
     scheduler.start()

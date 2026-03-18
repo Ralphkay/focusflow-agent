@@ -1,4 +1,4 @@
-# sync.py (Final Corrected Version)
+# sync.py (Pipeline-Fixed Version)
 import asyncio
 import logging
 import json
@@ -11,7 +11,7 @@ from urllib.parse import urljoin
 from client_api_service import sync_with_central_server
 from config import CONFIG, save_config
 from database import get_db_session, db_lock
-from client_models import AggregatedActivity, Project, Task, ManualBreak, LeavePeriod, EmployeeDetails, TaskActivity
+from client_models import AggregatedActivity, Project, Task, ManualBreak, LeavePeriod, EmployeeDetails, TaskActivity, LocationRecord
 
 logger = logging.getLogger(__name__)
 
@@ -24,14 +24,14 @@ def check_central_server_health():
     Returns True if the server is reachable and responsive, False otherwise.
     """
     base_url = os.getenv("CENTRAL_DASHBOARD_URL")
-    print(base_url, "sync.py")
+    logger.debug(f"Central dashboard URL: {base_url}")
     logger.debug(f"Checking central server health at: {base_url}")
     if not base_url:
         logger.error("CENTRAL_DASHBOARD_URL is not configured. Cannot perform health check.")
         return False
 
     health_check_endpoint = urljoin(base_url, "api/provision/csrf_token")
-    print("sync.py=>",base_url)
+    logger.debug(f"Health check target: {base_url}")
     try:
         logger.info(f"Performing health check on central server at: {health_check_endpoint}")
         response = sync_session.get(health_check_endpoint, timeout=10)
@@ -71,7 +71,7 @@ def _get_csrf_token_for_sync():
         return None
 
 
-async def sync_task_activities(activities_payload):
+def sync_task_activities(activities_payload):
     """
     Syncs new task activities to the central server.
     This function will be called by the background monitor's API endpoint.
@@ -103,14 +103,14 @@ async def sync_task_activities(activities_payload):
         response.raise_for_status()
         logger.info(f"Successfully synced {len(activities_payload)} task activities.")
         return response.json(), response.status_code
-    except requests.exceptions.RequestError as e:
+    except requests.exceptions.RequestException as e:
         logger.error(
             f"Network error during task activity sync: {e} - Response: {e.response.text if e.response else 'No response text'}",
             exc_info=True)
         return {'error': 'Failed to sync task activities to central server'}, 500
 
 
-async def sync_data():
+def sync_data():
     """
     Syncs aggregated activities from local DuckDB to remote server via API.
     This is the 'push_activities' job.
@@ -121,7 +121,7 @@ async def sync_data():
         with db_lock, get_db_session() as session:
             activities_to_sync = session.query(AggregatedActivity).filter(
                 AggregatedActivity.synced == False
-            ).limit(10).all()
+            ).limit(100).all()
             for activity in activities_to_sync:
                 session.expunge(activity)
     except Exception as e:
@@ -193,7 +193,6 @@ async def sync_data():
         response.raise_for_status()
         logger.info(f"Sync API response status code: {response.status_code}")
         logger.debug(f"Sync API response body: {response.text}")
-        response.raise_for_status()
 
         synced_ids = [activity.id for activity in activities_to_sync]
         if synced_ids:
@@ -218,13 +217,13 @@ async def sync_data():
         logger.error(f"An unexpected error occurred during aggregated activity sync: {e}", exc_info=True)
 
 
-async def sync_projects_and_tasks():
+def sync_projects_and_tasks():
     """
     Syncs unsynced projects and tasks from the local database to the central server.
     This is the 'push_projects_tasks' job.
     """
     logger.info("Starting project and task sync (push_projects_tasks job).")
-    base_url = CONFIG.get("CENTRAL_DASHBOARD_URL")
+    base_url = os.getenv("CENTRAL_DASHBOARD_URL")
     employee_id = CONFIG.get('employee_id')
     if not employee_id:
         logger.warning("Cannot sync projects/tasks, employee_id not configured.")
@@ -336,7 +335,7 @@ async def sync_projects_and_tasks():
         logger.error(f"An unexpected error occurred during task sync: {e}", exc_info=True)
 
 
-async def sync_status_data():
+def sync_status_data():
     """
     Syncs local break and leave periods to the server via API.
     This is the 'push_status' job.
@@ -358,7 +357,7 @@ async def sync_status_data():
         logger.info("No new status data (breaks/leaves) to sync.")
         return
 
-    base_url = CONFIG.get("CENTRAL_DASHBOARD_URL")
+    base_url = os.getenv("CENTRAL_DASHBOARD_URL")
     endpoint = urljoin(base_url, "api/sync/status")
 
     permanent_client_api_key = CONFIG.get('permanent_client_api_key')
@@ -397,7 +396,6 @@ async def sync_status_data():
         response.raise_for_status()
         logger.info(f"Status sync API response status code: {response.status_code}")
         logger.debug(f"Status sync API response body: {response.text}")
-        response.raise_for_status()
 
         with db_lock, get_db_session() as session:
             if breaks_to_sync:
@@ -411,7 +409,7 @@ async def sync_status_data():
             session.commit()
         logger.info(f"Successfully synced {len(breaks_to_sync)} breaks and {len(leaves_to_sync)} leaves.")
 
-    except requests.exceptions.RequestError as e:
+    except requests.exceptions.RequestException as e:
         logger.error(
             f"Network error during status data sync: {e} - Response: {e.response.text if e.response else 'No response text'}",
             exc_info=True)
@@ -419,7 +417,7 @@ async def sync_status_data():
         logger.error(f"An unexpected error during status data sync: {e}", exc_info=True)
 
 
-async def sync_employee_details():
+def sync_employee_details():
     """
     Syncs local employee details to the central server via API.
     This is the 'push_details' job.
@@ -447,7 +445,7 @@ async def sync_employee_details():
         logger.info("No unsynced employee details to sync.")
         return
 
-    base_url = CONFIG.get("CENTRAL_DASHBOARD_URL")
+    base_url = os.getenv("CENTRAL_DASHBOARD_URL")
     endpoint = urljoin(base_url, "api/sync/details")
 
     permanent_client_api_key = CONFIG.get('permanent_client_api_key')
@@ -477,7 +475,7 @@ async def sync_employee_details():
                                                                                     synchronize_session=False)
             session.commit()
         logger.info(f"Marked employee details for {details_id} as synced in local DB.")
-    except requests.exceptions.RequestError as e:
+    except requests.exceptions.RequestException as e:
         logger.error(
             f"Network error during employee details sync: {e} - Response: {e.response.text if e.response else 'No response text'}",
             exc_info=True)
@@ -486,13 +484,93 @@ async def sync_employee_details():
 
 
 def sync_status_data_immediately():
-    threading.Thread(target=lambda: asyncio.run(sync_status_data()), daemon=True,
+    threading.Thread(target=sync_status_data, daemon=True,
                      name="ImmediateStatusSyncThread").start()
 
 
 def sync_employee_details_immediately():
-    threading.Thread(target=lambda: asyncio.run(sync_employee_details()), daemon=True,
+    threading.Thread(target=sync_employee_details, daemon=True,
                      name="ImmediateDetailsSyncThread").start()
+
+
+def sync_location_data():
+    """
+    Syncs local location records to the central server via API.
+    This is the 'push_location' job.
+    """
+    logger.info("Starting location data sync (push_location job).")
+    locations_to_sync = []
+    try:
+        with db_lock, get_db_session() as session:
+            locations_to_sync = session.query(LocationRecord).filter(
+                LocationRecord.synced == False
+            ).limit(50).all()
+            for loc in locations_to_sync:
+                session.expunge(loc)
+    except Exception as e:
+        logger.error(f"Error reading location records for sync: {e}", exc_info=True)
+        return
+
+    if not locations_to_sync:
+        logger.info("No unsynced location records to sync.")
+        return
+
+    base_url = os.getenv("CENTRAL_DASHBOARD_URL")
+    if not base_url:
+        logger.error("CENTRAL_DASHBOARD_URL is not configured. Aborting location sync.")
+        return
+
+    permanent_client_api_key = CONFIG.get('permanent_client_api_key')
+    if not permanent_client_api_key:
+        logger.error("Permanent client API key not found. Cannot sync location data.")
+        return
+
+    csrf_token = _get_csrf_token_for_sync()
+    if not csrf_token:
+        logger.error("CSRF token missing for location sync. Aborting sync.")
+        return
+
+    headers = {
+        "Authorization": f"Bearer {permanent_client_api_key}",
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrf_token
+    }
+
+    endpoint = urljoin(base_url, "api/sync/location")
+    payload = [
+        {
+            "employee_id": loc.employee_id,
+            "timestamp": loc.timestamp.isoformat(),
+            "location_type": loc.location_type,
+            "wifi_ssid": loc.wifi_ssid,
+            "location_name": loc.location_name,
+            "city": loc.city,
+            "country": loc.country,
+            "latitude": loc.latitude,
+            "longitude": loc.longitude,
+            "ip_address": loc.ip_address,
+        }
+        for loc in locations_to_sync
+    ]
+
+    try:
+        logger.info(f"Sending {len(payload)} location records to {endpoint}")
+        response = sync_session.post(endpoint, json=payload, headers=headers, timeout=20)
+        response.raise_for_status()
+
+        synced_ids = [loc.id for loc in locations_to_sync]
+        if synced_ids:
+            with db_lock, get_db_session() as session:
+                session.query(LocationRecord).filter(
+                    LocationRecord.id.in_(synced_ids)
+                ).update({"synced": True}, synchronize_session=False)
+                session.commit()
+            logger.info(f"Successfully synced {len(synced_ids)} location records.")
+
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error during location data sync: {e}", exc_info=True)
+    except Exception as e:
+        logger.error(f"Unexpected error during location data sync: {e}", exc_info=True)
 
 
 def run_sync_in_background():
