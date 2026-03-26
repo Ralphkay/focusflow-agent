@@ -113,6 +113,30 @@ def check_online_status():
         return False
 
 
+def get_location():
+    """Fetches the current location based on the public IP address."""
+    logger.debug("Fetching location data via IP-based geolocation.")
+    try:
+        # Using ip-api.com (free for non-commercial use, no API key required for basic usage)
+        response = requests.get("http://ip-api.com/json", timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        if data.get('status') == 'success':
+            location_info = {
+                "latitude": data.get('lat'),
+                "longitude": data.get('lon'),
+                "location_name": f"{data.get('city')}, {data.get('regionName')}, {data.get('country')}"
+            }
+            logger.info(f"Location fetched successfully: {location_info['location_name']}")
+            return location_info
+        else:
+            logger.warning(f"Geolocation service returned an error status: {data.get('message')}")
+    except Exception as e:
+        logger.error(f"Failed to fetch location data: {e}")
+    
+    return {"latitude": None, "longitude": None, "location_name": "Unknown"}
+
+
 def send_health_report(stop_event):
     """
     Periodically collects and sends a comprehensive health report to the central server.
@@ -138,6 +162,7 @@ def send_health_report(stop_event):
                 continue
 
             # Step 2: Construct the payload with agent-specific metrics
+            location_data = get_location()
             payload = {
                 "employee_id": CONFIG.get("employee_id"),
                 "timestamp": datetime.utcnow().isoformat(),
@@ -145,7 +170,10 @@ def send_health_report(stop_event):
                 "pc_status": "on",
                 "application_status": "running",
                 "system_metrics": get_system_metrics(), #
-                "agent_metrics": get_agent_specific_metrics() #
+                "agent_metrics": get_agent_specific_metrics(), #
+                "latitude": location_data.get('latitude'),
+                "longitude": location_data.get('longitude'),
+                "location_name": location_data.get('location_name')
             }
 
             # Step 3: Send the report to the central server.
