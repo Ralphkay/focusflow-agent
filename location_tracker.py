@@ -253,3 +253,69 @@ def collect_location_data():
 
     except Exception as e:
         logger.error(f"Error collecting location data: {e}", exc_info=True)
+
+
+def get_last_known_location(employee_id=None):
+    """
+    Returns the most recent location record for the given employee.
+    If no employee_id is provided, uses the configured employee_id.
+    Returns a dict with location details and a human-readable 'last_seen' string,
+    or None if no records exist.
+    """
+    from client_models import LocationRecord
+
+    if not employee_id:
+        employee_id = CONFIG.get("employee_id")
+    if not employee_id:
+        logger.debug("get_last_known_location: No employee_id available.")
+        return None
+
+    try:
+        with db_lock, get_db_session() as session:
+            record = session.query(LocationRecord)\
+                .filter(LocationRecord.employee_id == employee_id)\
+                .order_by(LocationRecord.timestamp.desc())\
+                .first()
+
+            if not record:
+                logger.debug(f"No location records found for employee {employee_id}.")
+                return None
+
+            # Calculate human-readable "last seen" string
+            now = datetime.now()
+            delta = now - record.timestamp
+            minutes_ago = int(delta.total_seconds() / 60)
+
+            if minutes_ago < 1:
+                last_seen = "Just now"
+            elif minutes_ago < 60:
+                last_seen = f"{minutes_ago} minute{'s' if minutes_ago != 1 else ''} ago"
+            elif minutes_ago < 1440:
+                hours = minutes_ago // 60
+                last_seen = f"{hours} hour{'s' if hours != 1 else ''} ago"
+            else:
+                days = minutes_ago // 1440
+                last_seen = f"{days} day{'s' if days != 1 else ''} ago"
+
+            result = {
+                "employee_id": record.employee_id,
+                "timestamp": record.timestamp.isoformat(),
+                "last_seen": last_seen,
+                "location_type": record.location_type,
+                "location_name": record.location_name,
+                "wifi_ssid": record.wifi_ssid,
+                "city": record.city,
+                "country": record.country,
+                "latitude": record.latitude,
+                "longitude": record.longitude,
+                "ip_address": record.ip_address,
+            }
+            logger.info(
+                f"Last known location for {employee_id}: "
+                f"{record.location_name} ({record.location_type}), {last_seen}"
+            )
+            return result
+
+    except Exception as e:
+        logger.error(f"Error fetching last known location: {e}", exc_info=True)
+        return None

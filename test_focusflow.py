@@ -390,6 +390,41 @@ test("Generate sample PUSH payloads", test_sample_push_data)
 
 
 # ===================================================================
+# TEST 10: Last known location query
+# ===================================================================
+def test_last_known_location():
+    from location_tracker import get_last_known_location
+
+    test_employee_id = "test.user@cbg.com.gh"
+    result = get_last_known_location(test_employee_id)
+
+    if result is None:
+        raise Exception("get_last_known_location returned None — expected a record from TEST 8")
+
+    # Verify required keys exist
+    required_keys = [
+        "employee_id", "timestamp", "last_seen", "location_type",
+        "location_name", "wifi_ssid", "city", "country",
+        "latitude", "longitude", "ip_address"
+    ]
+    missing = [k for k in required_keys if k not in result]
+    if missing:
+        raise Exception(f"Missing keys in result: {missing}")
+
+    if not result.get("last_seen"):
+        raise Exception("'last_seen' field is empty")
+
+    return (
+        f"employee={result['employee_id']}, "
+        f"location={result['location_name']}, "
+        f"type={result['location_type']}, "
+        f"last_seen={result['last_seen']}"
+    )
+
+test("Last known location query", test_last_known_location)
+
+
+# ===================================================================
 # SUMMARY
 # ===================================================================
 print()
@@ -408,3 +443,4 @@ for status, name, detail in results:
 print()
 print(f"  Total: {len(results)} tests | ✅ {passes} passed | ❌ {fails} failed")
 print("=" * 70)
+
